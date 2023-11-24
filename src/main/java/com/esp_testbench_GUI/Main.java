@@ -81,7 +81,7 @@ public class Main extends Application
         rootStage.setTitle("ESP-TestBench demo");
         rootStage.show();
         rootStage.setHeight(200);
-        rootStage.setWidth(350);
+        rootStage.setWidth(380);
 
         refreshSerialList();
         loadConfig();
