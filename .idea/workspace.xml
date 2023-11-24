@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="ESP-TestBench-Client:jar" />
+    </artifacts-to-build>
+  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="047810c6-b58d-4dde-848c-496a9746a70c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/Launcher.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/Launcher.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/esp_testbench_GUI/Config.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/esp_testbench_GUI/Config.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/esp_testbench_GUI/Console.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/esp_testbench_GUI/Console.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/esp_testbench_GUI/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/esp_testbench_GUI/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/esp_testbench_Logic/etbChartGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/esp_testbench_Logic/etbChartGenerator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/esp_testbench_Logic/etbParser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/esp_testbench_Logic/etbParser.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/esp_testbench_Logic/programLoop.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/esp_testbench_Logic/programLoop.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/esp_testbench_Logic/testConf" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/esp_testbench_Logic/testConf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/module-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/module-info.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/resources/com/example/esptestbenchclient/hello-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/example/esptestbenchclient/hello-view.fxml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -13,27 +29,65 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 4
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
   <component name="ProjectId" id="2YXKs6gWwNR0t9ZMtyIyYLcKwHq" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "master",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Artifacts&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
+  <component name="RunManager">
+    <configuration name="Application" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="com.esp_testbench_GUI.Main" />
+      <module name="ESP-TestBench-Client" />
+      <option name="PROGRAM_PARAMETERS" value="--module-path $USER_HOME$/Documents/javafx-sdk-21.0.1/lib --add-modules javafx.controls,javafx.fxml" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="ESP-TestBench Client" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="ESP-TestBench Client" />
+      <option name="filePath" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -42,8 +96,36 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1700666690588</updated>
-      <workItem from="1700666691606" duration="2000" />
+      <workItem from="1700666691606" duration="9767000" />
+      <workItem from="1700692034143" duration="7401000" />
+      <workItem from="1700700741325" duration="1627000" />
+      <workItem from="1700736017931" duration="10136000" />
+      <workItem from="1700763373117" duration="718000" />
+      <workItem from="1700764110684" duration="24000" />
+      <workItem from="1700781163524" duration="6282000" />
+      <workItem from="1700825175239" duration="496000" />
+      <workItem from="1700826023427" duration="303000" />
+      <workItem from="1700826391206" duration="221000" />
+      <workItem from="1700826762374" duration="6476000" />
+      <workItem from="1700836490601" duration="868000" />
+      <workItem from="1700839897184" duration="686000" />
+      <workItem from="1700840665650" duration="78000" />
+      <workItem from="1700841013735" duration="19207000" />
     </task>
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

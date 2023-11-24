@@ -1,4 +1,6 @@
 package com.esp_testbench_Logic;
 
-public class programLoop {
+public abstract class programLoop implements Runnable
+{
+    abstract public void run();
 }

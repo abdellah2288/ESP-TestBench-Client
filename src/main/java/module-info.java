@@ -1,8 +1,10 @@
-module com.example.esptestbenchclient {
+module com.example.esptestbenchclient
+{
     requires javafx.controls;
     requires javafx.fxml;
+    requires com.fazecast.jSerialComm;
 
 
-    opens com.example.esptestbenchclient to javafx.fxml;
-    exports com.example.esptestbenchclient;
+    opens com.esp_testbench_GUI to javafx.fxml;
+    exports com.esp_testbench_GUI;
 }

@@ -1,0 +1,4 @@
+baudrate 115200;
+dht11_hum_tag d11h;
+dht11_tem_tag d11t;
+config_path /home/abdellah/.config/etbConf.conf;

@@ -1,54 +1,74 @@
-package com.esp_testbench;
+package com.esp_testbench_GUI;
 
+import com.esp_testbench_Logic.programLoop;
 import com.fazecast.jSerialComm.*;
 
-import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.Event;
 
-import javafx.geometry.Insets;
 
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.Pair;
+import javafx.util.StringConverter;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
+
+import static com.esp_testbench_Logic.etbParser.parseConfigFile;
+import static com.esp_testbench_Logic.etbParser.parseSerialIn;
 
 
 public class Main extends Application
 {
+    private Map<String,String> configMap = new HashMap<>()
+    {{
+        put("dht11_tem_tag","[DHT11-Temp]");
+        put("dht11_hum_tag","[DHT11-Hum]");
+        put("baudrate","115200");
+        put("config_path","/home/abdellah/.config/etbConf.conf");
+    }};
+
+    static public ArrayList<Pair<String,Float>> sensorReadings = new ArrayList<>();
+    private final MenuBar topBar = new MenuBar();
+    private final Menu file = new Menu("File");
+    private final Menu tools = new Menu("Tools");
+    private final MenuItem console = new MenuItem("Console");
+    private final MenuItem communications = new MenuItem("Communications analyzer");
+    private final MenuItem export = new MenuItem("Export to csv");
+    private final MenuItem configuration = new MenuItem("Configuration");
+
+    private final BorderPane baseContainer = new BorderPane();
     private SerialPort previousPort = null;
     private SerialPort currentPort = null;
     private final GridPane rootGrid = new GridPane();
-    private final Scene rootScene = new Scene(rootGrid, Color.rgb(250,250,250));
+    private final Label sensorLabel_1 = new Label();
+    private final Label sensorLabel_2 = new Label();
+    private final Circle connectIndicator = new Circle(){{
+       setRadius(10);
+       setFill(Color.RED);
+    }};
+    private final Scene rootScene = new Scene(baseContainer, Color.rgb(250,250,250));
     /**
      * Buttons
      */
-    private final Button testButton = new Button("test 1");
-    private final Button testButton2 = new Button("test 2");
-    private final Button testButton3 = new Button("test 3");
-    private final Button submitButton = new Button("submit");
-    private final Button clearButton = new Button("Clear");
     private final Button connectButton = new Button("Connect");
     private final Button disconnectButton = new Button("Disconnect");
-    /**
-     * text areas
-     */
-    private final TextField testInput = new TextField();
-    private final TextArea testConsole = new TextArea();
-
     /**
      * Combo boxes
      *
      */
-    ChoiceBox<Pair<String,Integer>> baudrates = new ChoiceBox<>();
+
     ChoiceBox<Pair<String,SerialPort>> serialDevices = new ChoiceBox<>();
+
     public static void main(String[] args)
     {
         Application.launch(args);
@@ -56,8 +76,133 @@ public class Main extends Application
     @Override
     public void start(Stage rootStage) throws Exception
     {
-        initBaudRateList();
+        rootStage.setScene(rootScene);
+        rootStage.setResizable(false);
+        rootStage.setTitle("ESP-TestBench demo");
+        rootStage.show();
+        rootStage.setHeight(200);
+        rootStage.setWidth(350);
+
         refreshSerialList();
+        loadConfig();
+        attachHandlers();
+
+        populateRootGrid();
+        setConstraints();
+
+        populateMenuBar();
+
+        baseContainer.setCenter(rootGrid);
+        baseContainer.setTop(topBar);
+        new Thread(() ->
+        {
+            while (true)
+            {
+                Platform.runLater(
+                        new programLoop() { public void run() {
+                            if(sensorReadings.size() > 200) sensorReadings.clear();
+                            updateConsole();
+                            if(currentPort != null && currentPort.isOpen())
+                            {
+                                connectIndicator.setFill(Color.LIMEGREEN);
+                            }
+                            else
+                            {
+                                connectIndicator.setFill(Color.RED);
+                            }
+                        }});
+
+                try
+                {
+                    System.gc();
+                    Thread.sleep(2000);
+                }
+                catch (Exception e)
+                {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }).start();
+    }
+
+
+    private void refreshSerialList()
+    {
+        List<Pair<String,SerialPort>> tempList = new ArrayList<>();
+        SerialPort[] portList = SerialPort.getCommPorts();
+
+        for(var port : portList)
+        {
+            tempList.add(new Pair<>(port.getSystemPortName().toString(),port));
+        }
+        serialDevices.getItems().setAll(tempList);
+    }
+    private void selectedSerialPort(Event event)
+    {
+        SerialPort selected =serialDevices.getSelectionModel().getSelectedItem().getValue();
+
+        if(selected != null)
+        {
+            selected.setBaudRate(Integer.valueOf(configMap.get("baudrate")));
+            selected.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED);
+            selected.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
+            selected.setParity(SerialPort.NO_PARITY);
+            previousPort = currentPort;
+            currentPort = selected;
+        }
+
+    }
+
+    private void updateConsole()
+    {
+        if(this.currentPort != null && this.currentPort.isOpen())
+        {
+            String[] sensorIdentifierlist = {configMap.get("dht11_tem_tag"),configMap.get("dht11_hum_tag")};
+            List<Pair<String,Float>> list = parseSerialIn(this.currentPort,sensorIdentifierlist);
+            if(list != null && list.size() > 0 )
+            {
+                for(Pair<String,Float> pair : list)
+                {
+                    if(pair.getKey().equals(configMap.get("dht11_tem_tag")))
+                    {
+                        sensorLabel_1.setText("[T]: " + pair.getValue().toString());
+                        sensorReadings.add(pair);
+                    }
+                    if(pair.getKey().equals(configMap.get("dht11_hum_tag")))
+                    {
+                        sensorLabel_2.setText("[H]: " + pair.getValue().toString());
+                        sensorReadings.add(pair);
+                    }
+                }
+            }
+        }
+    }
+
+    private void attachHandlers()
+    {
+        configuration.setOnAction(e -> {
+            Config.launch(configMap.get("config_path"),configMap);
+            loadConfig();
+        }
+        );
+        export.setOnAction(this::exportToCSV);
+        serialDevices.setConverter( new StringConverter<Pair<String,SerialPort>>() {
+            @Override
+            public String toString(Pair<String, SerialPort> pair)
+            {
+                return pair == null ? null : pair.getKey();
+            }
+
+            @Override
+            public Pair<String, SerialPort> fromString(String string)
+            {
+                return null;
+            }
+        });
+
+
+
+        serialDevices.setOnMouseClicked(x -> this.refreshSerialList());
         connectButton.setOnMouseClicked(event ->
         {
             if(this.previousPort != null)
@@ -66,37 +211,52 @@ public class Main extends Application
             }
             if(this.currentPort != null) this.currentPort.openPort();
         });
+
         disconnectButton.setOnMouseClicked(event ->{
             if(this.currentPort != null && this.currentPort.isOpen()) this.currentPort.closePort();
         });
-        clearButton.setOnMouseClicked(mouseEvent -> {
-            this.testConsole.clear();
-        });
 
         serialDevices.setOnAction(this::selectedSerialPort);
+    }
+    private void populateRootGrid()
+    {
+        try
+        {
+            Image image = new Image(new FileInputStream("/home/abdellah/Pictures/dht11_icon.png"));
+            ImageView imageView = new ImageView(image);
+            imageView.setFitHeight(80);
+            imageView.setFitWidth(80);
+            rootGrid.add(imageView,0,1);
+        }
+        catch(Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
 
 
+        GridPane.setHgrow(serialDevices,Priority.NEVER);
 
-        rootGrid.add(baudrates,0,0);
-        rootGrid.add(serialDevices,2,0);
-        rootGrid.add(connectButton,3,0);
-        rootGrid.add(disconnectButton,4,0);
-        rootGrid.setPadding(new Insets(10));
+        rootGrid.add(serialDevices,0,0,2,1);
+        rootGrid.add(connectIndicator,2,0);
+        rootGrid.add(connectButton,3,0,1,1);
+        rootGrid.add(disconnectButton,5,0,1,1);
+
+        rootGrid.add(sensorLabel_1,3,1);
+        rootGrid.add(sensorLabel_2,5,1);
+
+
         rootGrid.setHgap( 4 );
         rootGrid.setVgap( 4 );
-        rootGrid.add(testInput,0,1,4,1);
-        rootGrid.add(submitButton,4,1,2,1);
-        rootGrid.add(clearButton,4,2,2,1);
-        rootGrid.add(testConsole,0,2,4,4);
-
-        RowConstraints noResizeConst = new RowConstraints();
-        noResizeConst.setVgrow(Priority.NEVER);
-
+    }
+    private void setConstraints()
+    {
         ColumnConstraints colConsts = new ColumnConstraints();
+
         colConsts.setHgrow(Priority.ALWAYS);
+        colConsts.setMinWidth(Control.USE_PREF_SIZE);
 
         RowConstraints rowConsts = new RowConstraints();
-        rowConsts.setVgrow(Priority.ALWAYS);
+        rowConsts.setVgrow(Priority.SOMETIMES);
 
         for(int i = 0; i < rootGrid.getColumnCount();i++)
         {
@@ -106,106 +266,56 @@ public class Main extends Application
         {
             rootGrid.getRowConstraints().add(rowConsts);
         }
-        rootGrid.getRowConstraints().set(0, noResizeConst);
-        rootGrid.getRowConstraints().set(1, noResizeConst);
-        serialDevices.setMinWidth(Control.USE_PREF_SIZE);
-        baudrates.setMinWidth(Control.USE_PREF_SIZE);
-        testConsole.setEditable(false);
+    }
 
-        rootStage.setScene(rootScene);
-        rootStage.setTitle("ESP-TestBench demo");
+    private void populateMenuBar()
+    {
+        topBar.getMenus().addAll(file,tools);
+        tools.getItems().addAll(console,communications);
+        file.getItems().addAll(export,configuration);
+    }
 
-        submitButton.setOnMouseClicked(this::submitButtonCallback);
-
-        rootStage.show();
-        new AnimationTimer()
+    void exportToCSV(Event e)
+    {
+        boolean ping = true;
+        try
         {
-            @Override public void handle(long currentNanoTime)
+            BufferedWriter writer = new BufferedWriter(new FileWriter("/home/abdellah/sensorReadings.csv"));
+            writer.write("DHT-11 temperature, DHT-11 Humidity \n");
+            for(Pair<String,Float> pair : sensorReadings)
             {
-
-                refreshSerialList();
-                updateConsole();
-                try
-                {
-                    Thread.sleep(10);
-                }
-                catch (InterruptedException e)
-                {
-                }
+                if(!(ping ^ pair.getKey().equals(configMap.get("dht11_hum_tag")))) continue;
+                writer.write(ping ? pair.getValue().toString() + ',' : pair.getValue().toString() + '\n');
+                ping = !ping;
             }
-        }.start();
-    }
-
-   private void submitButtonCallback(Event event)
-    {
-        this.testConsole.appendText(this.testInput.getText());
-    }
-    private void initBaudRateList()
-    {
-        List<Pair<String, Integer>> baudRates = new ArrayList<>();
-
-        // Add supported baud rates for Linux
-        baudRates.add(new Pair<>("B50", 50));
-        baudRates.add(new Pair<>("B75", 75));
-        baudRates.add(new Pair<>("B110", 110));
-        baudRates.add(new Pair<>("B134", 134));
-        baudRates.add(new Pair<>("B150", 150));
-        baudRates.add(new Pair<>("B200", 200));
-        baudRates.add(new Pair<>("B300", 300));
-        baudRates.add(new Pair<>("B600", 600));
-        baudRates.add(new Pair<>("B1200", 1200));
-        baudRates.add(new Pair<>("B1800", 1800));
-        baudRates.add(new Pair<>("B2400", 2400));
-        baudRates.add(new Pair<>("B4800", 4800));
-        baudRates.add(new Pair<>("B9600", 9600));
-        baudRates.add(new Pair<>("B19200", 19200));
-        baudRates.add(new Pair<>("B38400", 38400));
-        baudRates.add(new Pair<>("B57600", 57600));
-        baudRates.add(new Pair<>("B115200", 115200));
-        baudRates.add(new Pair<>("B230400", 230400));
-        baudRates.add(new Pair<>("B460800", 460800));
-        baudRates.add(new Pair<>("B500000", 500000));
-        baudRates.add(new Pair<>("B576000", 576000));
-        baudRates.add(new Pair<>("B921600", 921600));
-        this.baudrates.getItems().addAll(baudRates);
-    }
-    private void refreshSerialList()
-    {
-        List<Pair<String,SerialPort>> tempList = new ArrayList<>();
-        for(var port : SerialPort.getCommPorts())
-        {
-            tempList.add(new Pair<>(port.toString(),port));
+            writer.close();
         }
-        serialDevices.getItems().setAll(tempList);
-    }
-    private void selectedSerialPort(Event event)
-    {
-        System.out.println(event.toString());
-        SerialPort selected =serialDevices.getSelectionModel().getSelectedItem().getValue();
-        Integer baudrate = baudrates.getSelectionModel().getSelectedItem() == null ? 0 : baudrates.getSelectionModel().getSelectedItem().getValue();
-        if(baudrate.intValue() != 0 && selected != null)
+        catch(Exception exception)
         {
-            selected.setBaudRate(baudrate.intValue());
-            selected.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED);
-            selected.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
-            selected.setParity(SerialPort.NO_PARITY);
-            previousPort = currentPort;
-            currentPort = selected;
+            System.out.println(exception.getStackTrace());
         }
     }
 
-    private void updateConsole()
+    int loadConfig()
     {
-        if(this.testConsole.getText().length() > 2500) this.testConsole.clear();
-        if(this.currentPort != null && this.currentPort.isOpen())
+        Set<String> keySet = configMap.keySet();
+        String[] confIdentifierList = new String[keySet.size()];
+        int counter = 0;
+        for(String key : configMap.keySet())
         {
-            if(this.currentPort.bytesAvailable() != 0)
+            confIdentifierList[counter] = key;
+            counter++;
+        }
+        List<Pair<String,String>> parsedConfig = parseConfigFile(configMap.get("config_path"),confIdentifierList);
+
+        if(parsedConfig == null) return -1;
+        for(Pair<String,String> pair : parsedConfig)
+        {
+            if(configMap.containsKey(pair.getKey()))
             {
-                byte[] recievedBytes = new byte[this.currentPort.bytesAvailable()];
-                this.currentPort.readBytes(recievedBytes,recievedBytes.length);
-                String recievedMessage = new String(recievedBytes, StandardCharsets.UTF_8);
-                this.testConsole.appendText(recievedMessage);
+                configMap.put(pair.getKey(),pair.getValue());
             }
         }
+        return 0;
     }
 }
