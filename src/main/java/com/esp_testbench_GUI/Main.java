@@ -29,21 +29,24 @@ import static com.esp_testbench_Logic.etbParser.parseSerialIn;
 
 public class Main extends Application
 {
-    private Map<String,String> configMap = new HashMap<>()
+    
+    private Map<String,String> configParams = new HashMap<>()
     {{
         put("dht11_tem_tag","[DHT11-Temp]");
         put("dht11_hum_tag","[DHT11-Hum]");
         put("baudrate","115200");
+        put("console_buffer_size","3000");
+        put("csv_sample_size","2000");
         put("config_path","/home/abdellah/.config/etbConf.conf");
     }};
-
+    private LinkedList<Byte> serialBuffer = new LinkedList<>();
     static public ArrayList<Pair<String,Float>> sensorReadings = new ArrayList<>();
     private final MenuBar topBar = new MenuBar();
     private final Menu file = new Menu("File");
     private final Menu tools = new Menu("Tools");
     private final MenuItem console = new MenuItem("Console");
     private final MenuItem communications = new MenuItem("Communications analyzer");
-    private final MenuItem export = new MenuItem("Export to csv");
+    private final MenuItem export = new MenuItem("Export to CSV");
     private final MenuItem configuration = new MenuItem("Configuration");
 
     private final BorderPane baseContainer = new BorderPane();
@@ -52,7 +55,8 @@ public class Main extends Application
     private final GridPane rootGrid = new GridPane();
     private final Label sensorLabel_1 = new Label();
     private final Label sensorLabel_2 = new Label();
-    private final Circle connectIndicator = new Circle(){{
+    private final Circle connectIndicator = new Circle()
+    {{
        setRadius(10);
        setFill(Color.RED);
     }};
@@ -77,12 +81,12 @@ public class Main extends Application
     public void start(Stage rootStage) throws Exception
     {
         rootStage.setScene(rootScene);
+        rootStage.getIcons().add(new Image(new FileInputStream("/home/abdellah/IdeaProjects/ESP-TestBench Client/static/esp32.png")));
         rootStage.setResizable(false);
         rootStage.setTitle("ESP-TestBench demo");
         rootStage.show();
         rootStage.setHeight(200);
         rootStage.setWidth(380);
-
         refreshSerialList();
         loadConfig();
         attachHandlers();
@@ -96,11 +100,24 @@ public class Main extends Application
         baseContainer.setTop(topBar);
         new Thread(() ->
         {
-            while (true)
+            boolean running = true;
+            while (running)
             {
                 Platform.runLater(
                         new programLoop() { public void run() {
-                            if(sensorReadings.size() > 200) sensorReadings.clear();
+                            if(sensorReadings.size() > Integer.valueOf(configParams.get("csv_sample_size"))) sensorReadings.clear();
+                            if(serialBuffer.size() > Integer.valueOf(configParams.get("console_buffer_size")))
+                            {
+                                serialBuffer.clear();
+                            }
+                            if(Console.getConsoleSize() > Integer.valueOf(configParams.get("console_buffer_size")))
+                            {
+                                Console.clearConsole();
+                            }
+                            if(Console.isOpen())
+                            {
+                                Console.refreshConsole(serialBuffer);
+                            }
                             updateConsole();
                             if(currentPort != null && currentPort.isOpen())
                             {
@@ -110,12 +127,13 @@ public class Main extends Application
                             {
                                 connectIndicator.setFill(Color.RED);
                             }
-                        }});
 
+                        }});
+                if(!rootStage.isShowing()) System.exit(0);
                 try
                 {
                     System.gc();
-                    Thread.sleep(2000);
+                    Thread.sleep(100);
                 }
                 catch (Exception e)
                 {
@@ -143,7 +161,7 @@ public class Main extends Application
 
         if(selected != null)
         {
-            selected.setBaudRate(Integer.valueOf(configMap.get("baudrate")));
+            selected.setBaudRate(Integer.valueOf(configParams.get("baudrate")));
             selected.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED);
             selected.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
             selected.setParity(SerialPort.NO_PARITY);
@@ -157,18 +175,18 @@ public class Main extends Application
     {
         if(this.currentPort != null && this.currentPort.isOpen())
         {
-            String[] sensorIdentifierlist = {configMap.get("dht11_tem_tag"),configMap.get("dht11_hum_tag")};
-            List<Pair<String,Float>> list = parseSerialIn(this.currentPort,sensorIdentifierlist);
+            String[] sensorIdentifierlist = {configParams.get("dht11_tem_tag"), configParams.get("dht11_hum_tag")};
+            List<Pair<String,Float>> list = parseSerialIn(this.currentPort,sensorIdentifierlist,serialBuffer);
             if(list != null && list.size() > 0 )
             {
                 for(Pair<String,Float> pair : list)
                 {
-                    if(pair.getKey().equals(configMap.get("dht11_tem_tag")))
+                    if(pair.getKey().equals(configParams.get("dht11_tem_tag")))
                     {
                         sensorLabel_1.setText("[T]: " + pair.getValue().toString());
                         sensorReadings.add(pair);
                     }
-                    if(pair.getKey().equals(configMap.get("dht11_hum_tag")))
+                    if(pair.getKey().equals(configParams.get("dht11_hum_tag")))
                     {
                         sensorLabel_2.setText("[H]: " + pair.getValue().toString());
                         sensorReadings.add(pair);
@@ -181,11 +199,12 @@ public class Main extends Application
     private void attachHandlers()
     {
         configuration.setOnAction(e -> {
-            Config.launch(configMap.get("config_path"),configMap);
+            Config.launch(configParams.get("config_path"), configParams);
             loadConfig();
         }
         );
         export.setOnAction(this::exportToCSV);
+        console.setOnAction(e -> Console.launchConsole());
         serialDevices.setConverter( new StringConverter<Pair<String,SerialPort>>() {
             @Override
             public String toString(Pair<String, SerialPort> pair)
@@ -284,7 +303,7 @@ public class Main extends Application
             writer.write("DHT-11 temperature, DHT-11 Humidity \n");
             for(Pair<String,Float> pair : sensorReadings)
             {
-                if(!(ping ^ pair.getKey().equals(configMap.get("dht11_hum_tag")))) continue;
+                if(!(ping ^ pair.getKey().equals(configParams.get("dht11_hum_tag")))) continue;
                 writer.write(ping ? pair.getValue().toString() + ',' : pair.getValue().toString() + '\n');
                 ping = !ping;
             }
@@ -298,22 +317,22 @@ public class Main extends Application
 
     int loadConfig()
     {
-        Set<String> keySet = configMap.keySet();
+        Set<String> keySet = configParams.keySet();
         String[] confIdentifierList = new String[keySet.size()];
         int counter = 0;
-        for(String key : configMap.keySet())
+        for(String key : configParams.keySet())
         {
             confIdentifierList[counter] = key;
             counter++;
         }
-        List<Pair<String,String>> parsedConfig = parseConfigFile(configMap.get("config_path"),confIdentifierList);
+        List<Pair<String,String>> parsedConfig = parseConfigFile(configParams.get("config_path"),confIdentifierList);
 
         if(parsedConfig == null) return -1;
         for(Pair<String,String> pair : parsedConfig)
         {
-            if(configMap.containsKey(pair.getKey()))
+            if(configParams.containsKey(pair.getKey()))
             {
-                configMap.put(pair.getKey(),pair.getValue());
+                configParams.put(pair.getKey(),pair.getValue());
             }
         }
         return 0;

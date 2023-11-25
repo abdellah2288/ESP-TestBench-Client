@@ -5,6 +5,7 @@ import javafx.util.Pair;
 
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class etbParser
@@ -48,7 +49,7 @@ public class etbParser
             return null;
         }
     }
-    static public List<Pair<String,Float>> parseSerialIn(SerialPort port,String[] sensorIdentifierList)
+    static public List<Pair<String,Float>> parseSerialIn(SerialPort port, String[] sensorIdentifierList, LinkedList<Byte> rawOutput)
     {
         try
         {
@@ -62,7 +63,7 @@ public class etbParser
             while(port.bytesAvailable() > 0)
             {
                 port.readBytes(readByte,1);
-
+                rawOutput.add(readByte[0]);
                 readChar = (char) (readByte[0] & 0xFF);
 
                 if(Character.isWhitespace(readChar))

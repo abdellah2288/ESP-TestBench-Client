@@ -1,17 +1,18 @@
 package com.esp_testbench_GUI;
 
-import com.esp_testbench_Logic.programLoop;
-import javafx.application.Application;
-import javafx.application.Platform;
+
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+
 import javafx.stage.Stage;
 import javafx.util.Pair;
 import javafx.util.StringConverter;
 
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,65 +21,88 @@ import java.util.Map;
 
 public class Config
 {
+    static boolean firstRun = true;
+    static final Stage rootStage = new Stage();
+    static final GridPane baseContainer = new GridPane();
+    static final Scene rootScene = new Scene(baseContainer, Color.rgb(250, 250, 250));
     static private Map<String,String> tempConfigParams = new HashMap<>();
     static private final Label baudrateLabel = new Label("Baudrate");
     static private final Label dht11TempLabel = new Label("Temperature tag");
     static private final Label dht11HumLabel = new Label("Humidity tag");
     static private final Label configPLabel = new Label("Config file");
+    static private final Label consoleBufferSizeLabel = new Label("Console buffer size");
+    static private final Label csvSampleSizeLabel = new Label("CSV sample size");
     static private ChoiceBox<Pair<String,Integer>> baudrates = new ChoiceBox<>();
     static private final TextField dhtTempField = new TextField();
     static private final TextField dhtHumField = new TextField();
     static private final TextField configPField = new TextField();
+    static private final TextField consoleBufferField = new TextField();
+    static private final TextField csvBufferField = new TextField();
     static private final Button applyButton = new Button("Apply");
     static public void launch(String configPath,Map<String,String> configParams)
     {
         initBaudRateList();
-        Stage rootStage = new Stage();
-        GridPane baseContainer = new GridPane();
-        Scene rootScene = new Scene(baseContainer, Color.rgb(250,250,250));
-
-        dhtHumField.setText(configParams.get("dht11_hum_tag"));
-        dhtTempField.setText(configParams.get("dht11_tem_tag"));
-        configPField.setText(configParams.get("config_path"));
-        applyButton.setOnMouseClicked(e -> writeConfig(configPath,configParams));
-
-        baseContainer.add(baudrateLabel,1,0,5,1);
-        baseContainer.add(baudrates,5,0);
-        
-        baseContainer.add(dht11HumLabel,1,1,5,1);
-        baseContainer.add(dhtHumField,1,2,5,1);
-        
-        baseContainer.add(dht11TempLabel,1,3,5,1);
-        baseContainer.add(dhtTempField,1,4,5,1);
-        
-        baseContainer.add(configPLabel,1,5,5,1);
-        baseContainer.add(configPField,1,6,5,1);
-        
-        baseContainer.add(applyButton,7,7);
-
-        ColumnConstraints colConsts = new ColumnConstraints();
-
-        colConsts.setHgrow(Priority.ALWAYS);
-        colConsts.setMinWidth(Control.USE_PREF_SIZE);
-
-        RowConstraints rowConsts = new RowConstraints();
-        rowConsts.setVgrow(Priority.SOMETIMES);
-        rowConsts.setMinHeight(Control.USE_PREF_SIZE);
-        for(int i = 0; i < baseContainer.getColumnCount();i++)
+        if(firstRun)
         {
-            baseContainer.getColumnConstraints().add(colConsts);
+            try
+            {
+                rootStage.getIcons().add(new Image(new FileInputStream("/home/abdellah/IdeaProjects/ESP-TestBench Client/static/esp32.png")));
+            }
+            catch(Exception e)
+            {
+                System.out.println(e.getStackTrace());
+            }
+            dhtHumField.setText(configParams.get("dht11_hum_tag"));
+            dhtTempField.setText(configParams.get("dht11_tem_tag"));
+            configPField.setText(configParams.get("config_path"));
+            consoleBufferField.setText(configParams.get("console_buffer_size"));
+            csvBufferField.setText(configParams.get("csv_sample_size"));
+
+            applyButton.setOnMouseClicked(e -> writeConfig(configPath, configParams));
+
+            baseContainer.add(baudrateLabel, 1, 0, 5, 1);
+            baseContainer.add(baudrates, 5, 0);
+
+            baseContainer.add(dht11HumLabel, 1, 1, 5, 1);
+            baseContainer.add(dhtHumField, 1, 2, 5, 1);
+
+            baseContainer.add(dht11TempLabel, 1, 3, 5, 1);
+            baseContainer.add(dhtTempField, 1, 4, 5, 1);
+
+            baseContainer.add(configPLabel, 1, 5, 5, 1);
+            baseContainer.add(configPField, 1, 6, 5, 1);
+
+            baseContainer.add(consoleBufferSizeLabel, 1, 7, 5, 1);
+            baseContainer.add(consoleBufferField, 1, 8, 5, 1);
+
+            baseContainer.add(csvSampleSizeLabel, 1, 9, 5, 1);
+            baseContainer.add(csvBufferField, 1, 10, 5, 1);
+
+            baseContainer.add(applyButton, 8, 12);
+
+            ColumnConstraints colConsts = new ColumnConstraints();
+
+            colConsts.setHgrow(Priority.ALWAYS);
+            colConsts.setMinWidth(Control.USE_PREF_SIZE);
+
+            RowConstraints rowConsts = new RowConstraints();
+            rowConsts.setVgrow(Priority.SOMETIMES);
+            rowConsts.setMinHeight(Control.USE_PREF_SIZE);
+            for (int i = 0; i < baseContainer.getColumnCount(); i++) {
+                baseContainer.getColumnConstraints().add(colConsts);
+            }
+            for (int i = 0; i < baseContainer.getRowCount(); i++) {
+                baseContainer.getRowConstraints().add(rowConsts);
+            }
+
+
+            rootStage.setScene(rootScene);
+            rootStage.setResizable(false);
+            rootStage.setTitle("Configuration");
+            rootStage.setWidth(480);
+            rootStage.setHeight(350);
+            firstRun = false;
         }
-        for(int i = 0; i < baseContainer.getRowCount();i++)
-        {
-            baseContainer.getRowConstraints().add(rowConsts);
-        }
-        
-        
-        rootStage.setScene(rootScene);
-        rootStage.setResizable(false);
-        rootStage.setTitle("Configuration");
-        rootStage.setWidth(480);
-        rootStage.setHeight(350);
         rootStage.show();
     }
     static private void initBaudRateList()
@@ -134,6 +158,8 @@ public class Config
         if(dhtHumField.getText().length() > 0) configParams.put("dht11_hum_tag",dhtHumField.getText());
         if(dhtTempField.getText().length() > 0) configParams.put("dht11_tem_tag",dhtTempField.getText());
         if(configPField.getText().length() > 0) configParams.put("config_path",configPField.getText());
+        if(csvBufferField.getText().length() > 0) configParams.put("csv_sample_size",csvBufferField.getText());
+        if(consoleBufferField.getText().length() > 0) configParams.put("console_buffer_size",consoleBufferField.getText());
         try
         {
             BufferedWriter writer = new BufferedWriter(new FileWriter(configPath));
