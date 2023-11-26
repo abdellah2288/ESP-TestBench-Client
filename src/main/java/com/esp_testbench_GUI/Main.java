@@ -1,5 +1,6 @@
 package com.esp_testbench_GUI;
 
+import com.esp_testbench_Logic.etbPlotGenerator;
 import com.esp_testbench_Logic.programLoop;
 import com.fazecast.jSerialComm.*;
 
@@ -38,6 +39,7 @@ public class Main extends Application
         put("console_buffer_size","3000");
         put("csv_sample_size","2000");
         put("config_path","/home/abdellah/.config/etbConf.conf");
+        put("csv_autogen","0");
     }};
     private LinkedList<Byte> serialBuffer = new LinkedList<>();
     static public ArrayList<Pair<String,Float>> sensorReadings = new ArrayList<>();
@@ -46,6 +48,7 @@ public class Main extends Application
     private final Menu tools = new Menu("Tools");
     private final MenuItem console = new MenuItem("Console");
     private final MenuItem communications = new MenuItem("Communications analyzer");
+    private final MenuItem plotGenerator = new MenuItem("Generate plot");
     private final MenuItem export = new MenuItem("Export to CSV");
     private final MenuItem configuration = new MenuItem("Configuration");
 
@@ -105,7 +108,16 @@ public class Main extends Application
             {
                 Platform.runLater(
                         new programLoop() { public void run() {
-                            if(sensorReadings.size() > Integer.valueOf(configParams.get("csv_sample_size"))) sensorReadings.clear();
+                            if(sensorReadings.size() > Integer.valueOf(configParams.get("csv_sample_size")))
+                            {
+                                if(Integer.valueOf(configParams.get("csv_autogen")) == 1)
+                                {
+                                    exportToCSV(null);
+                                }
+                                etbPlotGenerator.lastCount = 0;
+                                Plotter.clearPlot();
+                                sensorReadings.clear();
+                            }
                             if(serialBuffer.size() > Integer.valueOf(configParams.get("console_buffer_size")))
                             {
                                 serialBuffer.clear();
@@ -118,7 +130,11 @@ public class Main extends Application
                             {
                                 Console.refreshConsole(serialBuffer);
                             }
-                            updateConsole();
+                            if(Plotter.isOpen())
+                            {
+                                Plotter.updatePlotter(sensorReadings,new ArrayList<String>(){{ add(configParams.get("dht11_tem_tag"));add(configParams.get("dht11_hum_tag")); }});
+                            }
+                            pollTestBench();
                             if(currentPort != null && currentPort.isOpen())
                             {
                                 connectIndicator.setFill(Color.LIMEGREEN);
@@ -132,6 +148,7 @@ public class Main extends Application
                 if(!rootStage.isShowing()) System.exit(0);
                 try
                 {
+
                     System.gc();
                     Thread.sleep(100);
                 }
@@ -171,7 +188,7 @@ public class Main extends Application
 
     }
 
-    private void updateConsole()
+    private void pollTestBench()
     {
         if(this.currentPort != null && this.currentPort.isOpen())
         {
@@ -203,6 +220,7 @@ public class Main extends Application
             loadConfig();
         }
         );
+        plotGenerator.setOnAction(e -> Plotter.launchPlotter(sensorReadings,new ArrayList<String>(){{ add(configParams.get("dht11_tem_tag"));add(configParams.get("dht11_hum_tag")); }}));
         export.setOnAction(this::exportToCSV);
         console.setOnAction(e -> Console.launchConsole());
         serialDevices.setConverter( new StringConverter<Pair<String,SerialPort>>() {
@@ -290,7 +308,7 @@ public class Main extends Application
     private void populateMenuBar()
     {
         topBar.getMenus().addAll(file,tools);
-        tools.getItems().addAll(console,communications);
+        tools.getItems().addAll(console,plotGenerator,communications);
         file.getItems().addAll(export,configuration);
     }
 
@@ -326,7 +344,6 @@ public class Main extends Application
             counter++;
         }
         List<Pair<String,String>> parsedConfig = parseConfigFile(configParams.get("config_path"),confIdentifierList);
-
         if(parsedConfig == null) return -1;
         for(Pair<String,String> pair : parsedConfig)
         {

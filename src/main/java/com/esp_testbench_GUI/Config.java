@@ -7,6 +7,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 import javafx.util.StringConverter;
@@ -31,14 +32,17 @@ public class Config
     static private final Label dht11HumLabel = new Label("Humidity tag");
     static private final Label configPLabel = new Label("Config file");
     static private final Label consoleBufferSizeLabel = new Label("Console buffer size");
-    static private final Label csvSampleSizeLabel = new Label("CSV sample size");
+    static private final Label csvSampleSizeLabel = new Label("Sample size");
+    static private final Label csvAutogenLabel = new Label("Autogen CSV files");
     static private ChoiceBox<Pair<String,Integer>> baudrates = new ChoiceBox<>();
     static private final TextField dhtTempField = new TextField();
     static private final TextField dhtHumField = new TextField();
     static private final TextField configPField = new TextField();
     static private final TextField consoleBufferField = new TextField();
     static private final TextField csvBufferField = new TextField();
+    static private final CheckBox csvAutogenCheck = new CheckBox();
     static private final Button applyButton = new Button("Apply");
+
     static public void launch(String configPath,Map<String,String> configParams)
     {
         initBaudRateList();
@@ -57,28 +61,30 @@ public class Config
             configPField.setText(configParams.get("config_path"));
             consoleBufferField.setText(configParams.get("console_buffer_size"));
             csvBufferField.setText(configParams.get("csv_sample_size"));
-
+            csvAutogenCheck.setSelected(Integer.valueOf(configParams.get("csv_autogen"))  == 1);
+            csvAutogenCheck.setText("Autogenerate CSV files");
             applyButton.setOnMouseClicked(e -> writeConfig(configPath, configParams));
 
             baseContainer.add(baudrateLabel, 1, 0, 5, 1);
             baseContainer.add(baudrates, 5, 0);
 
-            baseContainer.add(dht11HumLabel, 1, 1, 5, 1);
-            baseContainer.add(dhtHumField, 1, 2, 5, 1);
+            baseContainer.add(csvAutogenCheck, 1, 1);
+            baseContainer.add(dht11HumLabel, 1, 2, 5, 1);
+            baseContainer.add(dhtHumField, 1, 3, 5, 1);
 
-            baseContainer.add(dht11TempLabel, 1, 3, 5, 1);
-            baseContainer.add(dhtTempField, 1, 4, 5, 1);
+            baseContainer.add(dht11TempLabel, 1, 4, 5, 1);
+            baseContainer.add(dhtTempField, 1, 5, 5, 1);
 
-            baseContainer.add(configPLabel, 1, 5, 5, 1);
-            baseContainer.add(configPField, 1, 6, 5, 1);
+            baseContainer.add(configPLabel, 1, 6, 5, 1);
+            baseContainer.add(configPField, 1, 7, 5, 1);
 
-            baseContainer.add(consoleBufferSizeLabel, 1, 7, 5, 1);
-            baseContainer.add(consoleBufferField, 1, 8, 5, 1);
+            baseContainer.add(consoleBufferSizeLabel, 1, 8, 5, 1);
+            baseContainer.add(consoleBufferField, 1, 9, 5, 1);
 
-            baseContainer.add(csvSampleSizeLabel, 1, 9, 5, 1);
-            baseContainer.add(csvBufferField, 1, 10, 5, 1);
+            baseContainer.add(csvSampleSizeLabel, 1, 10, 5, 1);
+            baseContainer.add(csvBufferField, 1, 11, 5, 1);
 
-            baseContainer.add(applyButton, 8, 12);
+            baseContainer.add(applyButton, 10, 13);
 
             ColumnConstraints colConsts = new ColumnConstraints();
 
@@ -160,6 +166,7 @@ public class Config
         if(configPField.getText().length() > 0) configParams.put("config_path",configPField.getText());
         if(csvBufferField.getText().length() > 0) configParams.put("csv_sample_size",csvBufferField.getText());
         if(consoleBufferField.getText().length() > 0) configParams.put("console_buffer_size",consoleBufferField.getText());
+        configParams.put("csv_autogen",csvAutogenCheck.isSelected() ? "1": "0" );
         try
         {
             BufferedWriter writer = new BufferedWriter(new FileWriter(configPath));
